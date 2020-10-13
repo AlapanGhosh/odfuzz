@@ -108,7 +108,7 @@ class DispatchedBuilder:
 
 class DirectBuilder:
     """A class for building and initializing all queryable entities with metadata passed in constructor."""
-    def __init__(self, metadata, restrictions,method):
+    def __init__(self, metadata, restrictions,method="GET"):
         self._queryable = QueryableEntities()
         self._metadata_string = metadata
         self._restrictions = restrictions
