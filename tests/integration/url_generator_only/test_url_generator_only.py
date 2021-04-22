@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import random
 
 from odfuzz.restrictions import RestrictionsGroup
 from odfuzz.entities import DirectBuilder
@@ -90,3 +91,21 @@ def test_direct_builder_http_delete():
     queries_list=set(queries_list)
     choice = queries_list.pop()
     assert ("filter" in choice or "expand" in choice or "startswith" in choice or "replace" in choice or "substring" in choice or "inlinecount" in choice) == False
+
+def test_direct_builder_body_generation():
+    random.seed(20)
+    path_to_metadata = Path(__file__).parent.joinpath("metadata-northwind-v2.xml")
+    metadata_file_contents = path_to_metadata.read_bytes()
+    restrictions = RestrictionsGroup(None)
+    dir_builder = DirectBuilder(metadata_file_contents, restrictions,"PUT")
+    dir_entities = dir_builder.build()
+    queryable_factory = SingleQueryable
+    body_list = []
+    body_list.clear()
+    for queryable in dir_entities.all():
+        entityset_urls_count = len(queryable.entity_set.entity_type.proprties())
+        for _ in range(entityset_urls_count):
+            q = queryable_factory(queryable, logger, 1)
+            queries,body = q.generate()
+            body_list.append(body)
+    assert random.choice(body_list) == "{\"OrderID\": 264879099, \"CustomerID\": \"PE\", \"EmployeeID\": 1232571814, \"OrderDate\": \"/Date(129712006108)/\", \"RequiredDate\": \"/Date(190417733358)/\", \"ShippedDate\": \"/Date(144052759134)/\", \"ShipVia\": -1121991714, \"Freight\": \"77202251625.6257m\", \"ShipName\": \"\\u00e8r\\u00fefy\\u00f4\\u2020hpD\\u00ff:fVK\\u00e1\\u00f1\\u201d\\u00da^:\", \"ShipAddress\": \"\\u0081\\u00c7\\u00d0F\\u00f0\\u2014\", \"ShipCity\": \"\\u00f6\\u00a1rsH\\u00f6\\u00ac*$\\u00fe\\u00d5\\u00f3\\u00a8\", \"ShipRegion\": \"\\u00eb\", \"ShipPostalCode\": \"d\\u00f2\\u00ae\\u00ff\\u00ea\", \"ShipCountry\": \"ZS\\u00fd\\u0192\\u00c0\"}"
